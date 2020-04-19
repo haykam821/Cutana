@@ -1,0 +1,24 @@
+{
+	"name": "cutana",
+	"version": "1.0.0",
+	"description": "An emulator for shortcuts.",
+	"main": "./src/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/haykam821/Cutana.git"
+	},
+	"keywords": [
+		"apple",
+		"shortcuts",
+		"evaluator"
+	],
+	"author": "haykam821",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/haykam821/Cutana/issues"
+	},
+	"homepage": "https://github.com/haykam821/Cutana#readme"
+}

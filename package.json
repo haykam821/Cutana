@@ -20,5 +20,9 @@
 	"bugs": {
 		"url": "https://github.com/haykam821/Cutana/issues"
 	},
-	"homepage": "https://github.com/haykam821/Cutana#readme"
+	"homepage": "https://github.com/haykam821/Cutana#readme",
+	"dependencies": {
+		"debug": "^4.1.1",
+		"require-all": "^3.0.0"
+	}
 }

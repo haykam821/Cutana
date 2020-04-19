@@ -4,7 +4,8 @@
 	"description": "An emulator for shortcuts.",
 	"main": "./src/index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"lint": "eslint \"./**/*.js\" --ignore-path .gitignore"
 	},
 	"repository": {
 		"type": "git",
@@ -24,5 +25,17 @@
 	"dependencies": {
 		"debug": "^4.1.1",
 		"require-all": "^3.0.0"
+	},
+	"devDependencies": {
+		"eslint": "^6.8.0",
+		"eslint-config-haykam": "^1.8.0",
+		"eslint-plugin-extra-rules": "0.0.0-development",
+		"eslint-plugin-html": "^6.0.2",
+		"eslint-plugin-json": "^1.4.0",
+		"eslint-plugin-markdown": "^1.0.2",
+		"eslint-plugin-unicorn": "^10.0.0"
+	},
+	"eslintConfig": {
+		"extends": "eslint-config-haykam"
 	}
 }

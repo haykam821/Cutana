@@ -5,7 +5,8 @@
 	"main": "./src/index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"lint": "eslint \"./**/*.js\" --ignore-path .gitignore"
+		"lint": "eslint \"./**/*.js\" --ignore-path .gitignore",
+		"docs": "jsdoc ./src --recurse --destination ./docs --template ./node_modules/minami"
 	},
 	"repository": {
 		"type": "git",
@@ -33,7 +34,9 @@
 		"eslint-plugin-html": "^6.0.2",
 		"eslint-plugin-json": "^1.4.0",
 		"eslint-plugin-markdown": "^1.0.2",
-		"eslint-plugin-unicorn": "^10.0.0"
+		"eslint-plugin-unicorn": "^10.0.0",
+		"jsdoc": "^3.6.4",
+		"minami": "^1.2.3"
 	},
 	"eslintConfig": {
 		"extends": "eslint-config-haykam"

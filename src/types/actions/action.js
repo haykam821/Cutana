@@ -10,11 +10,11 @@ class Action {
 		this.executor = executor;
 		this.context = context;
 
-		this.rawAction = rawAction;
-		this.parameters = this.getParameters(rawAction.parameters);
-
 		const identifier = this.constructor.identifier.split(".");
 		this.log = log.extend(identifier[identifier.length - 1]);
+
+		this.rawAction = rawAction;
+		this.parameters = this.getParameters(rawAction.parameters);
 	}
 
 	getParameters(parameters) {
@@ -82,7 +82,11 @@ class Action {
 	}
 
 	getParameterValue(value) {
-		if (!value.Value) {
+		if (Array.isArray(value)) {
+			return value.map(subValue => {
+				return this.getParameterValue(subValue.WFValue || subValue);
+			});
+		} else if (!value.Value) {
 			return value;
 		} else if (value.Value.Type) {
 			return this.getSpecialValueType(value.Value);

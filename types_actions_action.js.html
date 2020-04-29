@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>types/actions/action.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Classes</li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="ShortcutExecutor.html">ShortcutExecutor</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="ShortcutExecutor.html#execute">execute</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="ShortcutExecutor.html#executeAction">executeAction</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="ShortcutExecutor.html#getActionInstance">getActionInstance</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="ShortcutExecutor.html#registerAction">registerAction</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="ShortcutExecutor.html#registerActions">registerActions</a></span></li><li class="nav-heading"><a href="global.html">Globals</a></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#getActions">getActions</a></span></li>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">types/actions/action.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const clipboard = require("clipboardy");
+
+const { actions: log } = require("../../utils/debug.js");
+
+const rangePattern = /{(\d+), (\d+)}/;
+
+class Action {
+	constructor(executor, context, rawAction) {
+		/**
+		 * @type {ShortcutExecutor}
+		 */
+		this.executor = executor;
+		this.context = context;
+
+		const identifier = this.constructor.identifier.split(".");
+		this.log = log.extend(identifier[identifier.length - 1]);
+
+		this.rawAction = rawAction;
+		this.parameters = this.getParameters(rawAction.parameters);
+	}
+
+	getParameters(parameters) {
+		return Object.fromEntries(Object.entries(parameters).map(([ key, value ]) => {
+			return [
+				this.getParameterKey(key),
+				this.getParameterValue(value),
+			];
+		}));
+	}
+
+	getParameterKey(key) {
+		if (key.startsWith("WF")) {
+			key = key[2].toLowerCase() + key.slice(3);
+		}
+		return key;
+	}
+
+	/**
+	 * Gets start and end indexes from a range string.
+	 * @param {string} rangeString The range string to get indexes from.
+	 * @returns {Object?} An object containing the start and end indexes.
+	 */
+	getAttachmentRange(rangeString) {
+		const range = rangePattern.exec(rangeString);
+		if (range === null) return null;
+
+		return {
+			end: parseInt(range[2]),
+			start: parseInt(range[1]),
+		};
+	}
+
+	/**
+	 * Resolves attachments to a string.
+	 * @param {Object} base The base string.
+	 * @param {Object[]} attachments The attachments to apply to the base string.
+	 * @returns {string} The string with attachments resolved.
+	 */
+	resolveAttachments(base = "", attachments) {
+		for (const [ rangeString, value ] of attachments) {
+			const range = this.getAttachmentRange(rangeString);
+			if (range === null) continue;
+
+			base = base.substr(0, range.start) + this.getSpecialValueType(value) + base.substr(range.end + base.length);
+		}
+		return base;
+	}
+
+	/**
+	 * Resolves a special value type.
+	 * @param {Object} value The value type to resolve.
+	 * @returns {*} The resolved value.
+	 */
+	getSpecialValueType(value) {
+		switch (value.Type) {
+			case "ExtensionInput":
+				return this.executor.initialInput;
+			case "ActionOutput":
+				return this.context.variables[value.OutputUUID];
+			case "Clipboard":
+				return clipboard.readSync();
+		}
+
+		this.log("could not get value for value type '%s': %o", value.Type, value);
+		return null;
+	}
+
+	getParameterValue(value) {
+		if (Array.isArray(value)) {
+			return value.map(subValue => {
+				return this.getParameterValue(subValue.WFValue || subValue);
+			});
+		} else if (!value.Value) {
+			return value;
+		} else if (value.Value.Type) {
+			return this.getSpecialValueType(value.Value);
+		} else if (value.Value.attachmentsByRange) {
+			return this.resolveAttachments(value.Value.string, Object.entries(value.Value.attachmentsByRange));
+		}
+	}
+
+	/**
+	 * @abstract
+	 * @returns {*} The output of the action.
+	 */
+	run() {
+		return;
+	}
+
+	/**
+	 * @returns {*} The output of the action.
+	 */
+	execute() {
+		return this.run();
+	}
+}
+module.exports = Action;</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a> on Wed Apr 29 2020 23:16:28 GMT+0000 (Coordinated Universal Time) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

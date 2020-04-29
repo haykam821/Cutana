@@ -1,5 +1,7 @@
 const { actions: log } = require("../../utils/debug.js");
 
+const rangePattern = /{(\d+), (\d+)}/;
+
 class Action {
 	constructor(executor, context, rawAction) {
 		/**
@@ -31,20 +33,62 @@ class Action {
 		return key;
 	}
 
-	getParameterValue(value) {
-		if (!value.Value || !value.Value.Type) {
-			return value;
-		}
+	/**
+	 * Gets start and end indexes from a range string.
+	 * @param {string} rangeString The range string to get indexes from.
+	 * @returns {Object?} An object containing the start and end indexes.
+	 */
+	getAttachmentRange(rangeString) {
+		const range = rangePattern.exec(rangeString);
+		if (range === null) return null;
 
-		switch (value.Value.Type) {
+		return {
+			end: parseInt(range[2]),
+			start: parseInt(range[1]),
+		};
+	}
+
+	/**
+	 * Resolves attachments to a string.
+	 * @param {Object} base The base string.
+	 * @param {Object[]} attachments The attachments to apply to the base string.
+	 * @returns {string} The string with attachments resolved.
+	 */
+	resolveAttachments(base = "", attachments) {
+		for (const [ rangeString, value ] of attachments) {
+			const range = this.getAttachmentRange(rangeString);
+			if (range === null) continue;
+
+			base = base.substr(0, range.start) + this.getSpecialValueType(value) + base.substr(range.end + base.length);
+		}
+		return base;
+	}
+
+	/**
+	 * Resolves a special value type.
+	 * @param {Object} value The value type to resolve.
+	 * @returns {*} The resolved value.
+	 */
+	getSpecialValueType(value) {
+		switch (value.Type) {
 			case "ExtensionInput":
 				return this.executor.initialInput;
 			case "ActionOutput":
-				return this.context.variables[value.Value.OutputUUID];
+				return this.context.variables[value.OutputUUID];
 		}
 
-		this.log("could not get value for value type '%s': %o", value.Value.Type, value);
+		this.log("could not get value for value type '%s': %o", value.Type, value);
 		return null;
+	}
+
+	getParameterValue(value) {
+		if (!value.Value) {
+			return value;
+		} else if (value.Value.Type) {
+			return this.getSpecialValueType(value.Value);
+		} else if (value.Value.attachmentsByRange) {
+			return this.resolveAttachments(value.Value.string, Object.entries(value.Value.attachmentsByRange));
+		}
 	}
 
 	/**

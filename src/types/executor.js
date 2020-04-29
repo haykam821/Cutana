@@ -2,17 +2,68 @@ const { main: log } = require("../utils/debug.js");
 const defaultActions = require("../utils/get-actions.js")();
 
 const Context = require("./context.js");
+const Action = require("../types/actions/action.js");
 
 class ShortcutExecutor {
 	/**
 	 * @param {Object} options Options for the executor.
 	 */
 	constructor(options) {
-		this.actions = defaultActions;
+		this.actions = {};
+		this.registerActions(defaultActions);
 
 		this.initialInput = options.initialInput || options.input;
 		this.blacklistedActions = Array.isArray(options.blacklistedActions) ? options.blacklistedActions : [];
 		this.skipUnsupportedActions = options.skipUnsupportedActions;
+	}
+
+	/**
+	 * Registers actions.
+	 * @param {Action[]} actions The actions to register.
+	 */
+	registerActions(actions) {
+		if (!Array.isArray(actions)) {
+			throw new TypeError("The actions to register must be an array.");
+		}
+
+		for (const action of actions) {
+			this.registerAction(action);
+		}
+	}
+
+	/**
+	 * Registers an action.
+	 * @param {Action} action The action to register.
+	 */
+	registerAction(action) {
+		if (!(action.prototype instanceof Action)) {
+			throw new TypeError("Actions must extend the Action class");
+		}
+		if (!action.identifier) {
+			throw new Error("Actions must have an identifier");
+		}
+
+		this.actions[action.identifier] = action;
+	}
+
+	/**
+	 * Gets an action instance from a raw action.
+	 * @param {ShortcutAction} rawAction The raw action to get an action instance of.
+	 * @returns {Action} The action instance.
+	 */
+	getActionInstance(rawAction) {
+		const action = this.actions[rawAction.identifier];
+		if (!action) {
+			if (this.skipUnsupportedActions) {
+				log("skipping action with identifier '%s' as it is unsupported", rawAction.identifier);
+				return;
+			}
+
+			throw new Error("Unsupported action: " + rawAction.identifier);
+		}
+
+		const actionInstance = new action(this, rawAction);
+		return actionInstance;
 	}
 
 	/**
@@ -25,21 +76,12 @@ class ShortcutExecutor {
 			throw new Error("Blacklisted action: " + rawAction.identifier);
 		}
 
-		const action = this.actions[rawAction.identifier];
-		if (!action) {
-			if (this.skipUnsupportedActions) {
-				log("skipping action with identifier '%s' as it is unsupported", rawAction.identifier);
-				return;
-			}
-
-			throw new Error("Unsupported action: " + rawAction.identifier);
+		const actionInstance = this.getActionInstance(rawAction);
+		if (actionInstance) {
+			log("evaluating action with identifier '%s' with input of '%s' and parameters: %O", rawAction.identifier, context.input, actionInstance.parameters);
+			context.input = await actionInstance.execute();
+			log("resulting context of previous: %O", context);
 		}
-
-		log("evaluating action with identifier '%s' with input of '%s' and parameters: %o", rawAction.identifier, context.input, rawAction.parameters);
-
-		const actionInstance = new action(this, rawAction);
-		context.input = await actionInstance.execute();
-		console.log(context);
 	}
 
 	/**

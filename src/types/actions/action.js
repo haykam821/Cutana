@@ -21,10 +21,8 @@ class Action {
 
 	getParameterKey(key) {
 		if (key.startsWith("WF")) {
-			key = key.slice(2);
+			key = key[2].toLowerCase() + key.slice(3);
 		}
-		key = key[0].toLowerCase() + key.slice(1);
-
 		return key;
 	}
 

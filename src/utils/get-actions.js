@@ -10,11 +10,6 @@ function getActions() {
 		dirname: path.resolve(__dirname, "../actions"),
 		filter: /(.+)\.js$/,
 	});
-	return Object.fromEntries(Object.values(actions).map(action => {
-		return [
-			action.identifier,
-			action,
-		];
-	}));
+	return Object.values(actions);
 }
 module.exports = getActions;

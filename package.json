@@ -24,6 +24,7 @@
 	},
 	"homepage": "https://github.com/haykam821/Cutana#readme",
 	"dependencies": {
+		"clipboardy": "^2.3.0",
 		"debug": "^4.1.1",
 		"require-all": "^3.0.0"
 	},

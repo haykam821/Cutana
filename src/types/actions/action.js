@@ -1,3 +1,5 @@
+const clipboard = require("clipboardy");
+
 const { actions: log } = require("../../utils/debug.js");
 
 const rangePattern = /{(\d+), (\d+)}/;
@@ -75,6 +77,8 @@ class Action {
 				return this.executor.initialInput;
 			case "ActionOutput":
 				return this.context.variables[value.OutputUUID];
+			case "Clipboard":
+				return clipboard.readSync();
 		}
 
 		this.log("could not get value for value type '%s': %o", value.Type, value);

@@ -1,4 +1,4 @@
-const Action = require("../types/action.js");
+const Action = require("../types/actions/action.js");
 
 class NothingAction extends Action {
 	run() {

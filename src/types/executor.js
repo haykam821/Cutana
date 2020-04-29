@@ -49,9 +49,10 @@ class ShortcutExecutor {
 	/**
 	 * Gets an action instance from a raw action.
 	 * @param {ShortcutAction} rawAction The raw action to get an action instance of.
+	 * @param {Context} context The context of the action.
 	 * @returns {Action} The action instance.
 	 */
-	getActionInstance(rawAction) {
+	getActionInstance(rawAction, context) {
 		const action = this.actions[rawAction.identifier];
 		if (!action) {
 			if (this.skipUnsupportedActions) {
@@ -62,7 +63,7 @@ class ShortcutExecutor {
 			throw new Error("Unsupported action: " + rawAction.identifier);
 		}
 
-		const actionInstance = new action(this, rawAction);
+		const actionInstance = new action(this, context, rawAction);
 		return actionInstance;
 	}
 
@@ -76,11 +77,17 @@ class ShortcutExecutor {
 			throw new Error("Blacklisted action: " + rawAction.identifier);
 		}
 
-		const actionInstance = this.getActionInstance(rawAction);
+		const actionInstance = this.getActionInstance(rawAction, context);
 		if (actionInstance) {
-			log("evaluating action with identifier '%s' with input of '%s' and parameters: %O", rawAction.identifier, context.input, actionInstance.parameters);
-			context.input = await actionInstance.execute();
-			log("resulting context of previous: %O", context);
+			actionInstance.log("evaluating action with identifier '%s' with input of '%s' and parameters: %O", rawAction.identifier, context.input, actionInstance.parameters);
+
+			const actionOutput = await actionInstance.execute();
+			context.input = actionOutput;
+			if (actionInstance.parameters.UUID) {
+				context.variables[actionInstance.parameters.UUID] = actionOutput;
+			}
+
+			actionInstance.log("resulting context of previous: %O", context);
 		}
 	}
 

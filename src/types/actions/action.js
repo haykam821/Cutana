@@ -1,13 +1,18 @@
+const { actions: log } = require("../../utils/debug.js");
+
 class Action {
-	constructor(executor, rawAction) {
+	constructor(executor, context, rawAction) {
 		/**
 		 * @type {ShortcutExecutor}
 		 */
 		this.executor = executor;
-		this.context = this.executor.context;
+		this.context = context;
 
 		this.rawAction = rawAction;
 		this.parameters = this.getParameters(rawAction.parameters);
+
+		const identifier = this.constructor.identifier.split(".");
+		this.log = log.extend(identifier[identifier.length - 1]);
 	}
 
 	getParameters(parameters) {
@@ -31,6 +36,14 @@ class Action {
 			return value;
 		}
 
+		switch (value.Value.Type) {
+			case "ExtensionInput":
+				return this.executor.initialInput;
+			case "ActionOutput":
+				return this.context.variables[value.Value.OutputUUID];
+		}
+
+		this.log("could not get value for value type '%s': %o", value.Value.Type, value);
 		return null;
 	}
 

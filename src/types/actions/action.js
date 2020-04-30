@@ -35,6 +35,10 @@ class Action {
 		return key;
 	}
 
+	ensureType(value, type) {
+		return type === 3 ? parseInt(value) : value;
+	}
+
 	/**
 	 * Gets start and end indexes from a range string.
 	 * @param {string} rangeString The range string to get indexes from.
@@ -66,6 +70,20 @@ class Action {
 		return base;
 	}
 
+	getDictionaryValue(value) {
+		return this.getParameterValue(value) || (value.Value && this.getDictionaryValue(value.Value));
+	}
+
+	getDictionary(entries = []) {
+		return Object.fromEntries(entries.map(entry => {
+			const value = this.getDictionaryValue(entry.WFValue);
+			return [
+				this.getParameterValue(entry.WFKey),
+				this.ensureType(value, entry.WFItemType),
+			];
+		}));
+	}
+
 	/**
 	 * Resolves a special value type.
 	 * @param {Object} value The value type to resolve.
@@ -79,6 +97,8 @@ class Action {
 				return this.context.variables[value.OutputUUID];
 			case "Clipboard":
 				return clipboard.readSync();
+			case "Ask":
+				return "no";
 		}
 
 		this.log("could not get value for value type '%s': %o", value.Type, value);
@@ -88,12 +108,17 @@ class Action {
 	getParameterValue(value) {
 		if (Array.isArray(value)) {
 			return value.map(subValue => {
-				return this.getParameterValue(subValue.WFValue || subValue);
+				const parameterValue = this.getParameterValue(subValue.WFValue || subValue);
+				return this.ensureType(parameterValue, subValue.WFItemType);
 			});
-		} else if (!value.Value) {
+		} else if (value.Value === undefined) {
 			return value;
+		} else if (typeof value.Value !== "object" || value.Value === null) {
+			return value.Value;
 		} else if (value.Value.Type) {
 			return this.getSpecialValueType(value.Value);
+		} else if (value.Value.WFDictionaryFieldValueItems || (value.Value.Value && value.Value.Value.WFDictionaryFieldValueItems)) {
+			return this.getDictionary(value.Value.WFDictionaryFieldValueItems || value.Value.Value.WFDictionaryFieldValueItems);
 		} else if (value.Value.attachmentsByRange) {
 			return this.resolveAttachments(value.Value.string, Object.entries(value.Value.attachmentsByRange));
 		}

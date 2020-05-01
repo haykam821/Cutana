@@ -31,8 +31,9 @@
 		"dark-mode": "^3.0.0",
 		"debug": "^4.1.1",
 		"escape-string-regexp": "^4.0.0",
+		"ipify": "^4.0.0",
 		"require-all": "^3.0.0",
-		"systeminformation": "^4.23.9",
+		"systeminformation": "^4.24.0",
 		"vol": "^3.0.0"
 	},
 	"devDependencies": {

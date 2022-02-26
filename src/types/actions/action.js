@@ -13,7 +13,7 @@ class Action {
 		this.context = context;
 
 		const identifier = this.constructor.identifier.split(".");
-		this.log = log.extend(identifier[identifier.length - 1]);
+		this.log = log.extend(identifier.at(-1));
 
 		this.rawAction = rawAction;
 		this.parameters = this.getParameters(rawAction.parameters);
@@ -65,7 +65,7 @@ class Action {
 			const range = this.getAttachmentRange(rangeString);
 			if (range === null) continue;
 
-			base = base.substr(0, range.start) + this.getSpecialValueType(value) + base.substr(range.end + base.length);
+			base = base.slice(0, Math.max(0, range.start)) + this.getSpecialValueType(value) + base.slice(range.end + base.length);
 		}
 		return base;
 	}

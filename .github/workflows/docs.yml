@@ -1,0 +1,20 @@
+name: Generate Docs
+on:
+  push:
+    branches:
+      - master
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2.4.0
+      - name: Install
+        run: npm install
+      - name: Generate Docs
+        run: npm run docs
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4.2.5
+        with:
+          branch: gh-pages
+          folder: docs
